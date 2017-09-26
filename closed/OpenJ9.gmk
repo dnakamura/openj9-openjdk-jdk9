@@ -164,7 +164,7 @@ OPENJ9_STAGED_BUILDSPECS := \
 stage-openj9-tools :
 	@$(ECHO) Staging OpenJ9 sourcetools in $(OUTPUT_ROOT)/vm
 	$(call openj9_copy_tree,$(OUTPUT_ROOT)/vm/sourcetools,$(OPENJ9_TOPDIR)/sourcetools)
-
+	
 build-openj9-tools : stage-openj9-tools
 	@$(ECHO) Building OpenJ9 tools
 	($(MAKE) $(MAKEFLAGS) -C $(OUTPUT_ROOT)/vm/sourcetools -f buildj9tools.mk \
@@ -207,6 +207,8 @@ run-preprocessors-j9 : stage-j9 $(OUTPUT_ROOT)/vm/tr.source/jit.version $(OUTPUT
 			OMR_DIR=$(OUTPUT_ROOT)/vm/omr \
 			SPEC=$(OPENJ9_BUILDSPEC) \
 			UMA_OPTIONS_EXTRA="-buildDate $(shell date +'%Y%m%d')" \
+			$(if $(findstring true, $(OPENJ9_ENABLE_CMAKE)), ENABLE_CMAKE=true CALLED_BY_SOURCE_ZIP=yes) \
+			CMAKE=$(CMAKE) \
 			tools \
 	)
 	# for xLinux there is a hardcoded reference in mkconstants.mk for gcc-4.6.  Openjdk minimum gcc is 4.8.2
@@ -214,7 +216,14 @@ run-preprocessors-j9 : stage-j9 $(OUTPUT_ROOT)/vm/tr.source/jit.version $(OUTPUT
 
 build-j9 : run-preprocessors-j9
 	@$(ECHO) Compiling OpenJ9 in $(OUTPUT_ROOT)/vm
+ifeq ($(OPENJ9_ENABLE_CMAKE),true)
+	(export OMR_DIR=$(OUTPUT_ROOT)/vm/omr OPENJ9_BUILD=true && \
+		cd $(OUTPUT_ROOT)/vm/build && $(MAKE) $(MAKEFLAGS) install && \
+		cd $(OUTPUT_ROOT)/vm && $(MAKE) $(MAKEFLAGS) all $(if $(findstring true, $(OPENJ9_ENABLE_CMAKE)), ENABLE_CMAKE=true) \
+	)
+else
 	(export OMR_DIR=$(OUTPUT_ROOT)/vm/omr OPENJ9_BUILD=true && cd $(OUTPUT_ROOT)/vm && $(MAKE) $(MAKEFLAGS) all)
+endif
 	@$(ECHO) OpenJ9 compile complete
 	# jvm and jsig are required for compiling other java.base support natives
 	@$(MKDIR) -p $(OUTPUT_ROOT)/support/modules_libs/java.base/server/
