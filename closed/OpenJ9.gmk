@@ -370,6 +370,7 @@ run-preprocessors-j9 : stage-j9 \
 	export BOOT_JDK=$(BOOT_JDK) $(EXPORT_MSVS_ENV_VARS) \
 		&& $(MAKE) -C $(OUTPUT_ROOT)/vm $(MAKEFLAGS) -f buildtools.mk \
 			BUILD_ID=$(BUILD_ID) \
+			CCACHE="$(CCACHE)" \
 			CMAKE=$(CMAKE) \
 			EXTRA_CONFIGURE_ARGS=$(OMR_EXTRA_CONFIGURE_ARGS) \
 			FREEMARKER_JAR="$(FREEMARKER_JAR)" \
